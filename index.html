@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR 文字识别</title>
+    <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+
+</head>
+
+<style>
+    @keyframes scan {
+        0% {
+            height: 0;
+        }
+
+        to {
+            opacity: 0;
+            height: 298px;
+        }
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+    }
+
+    header {
+        height: 180px;
+        width: 100vw;
+        background: #f1f1f1;
+    }
+
+    header p {
+        text-align: center;
+        line-height: 180px;
+        font-size: 40px;
+    }
+
+    .core {
+        height: 540px;
+        width: 1000px;
+        margin: 20px auto;
+    }
+
+    .core .source {
+        float: left;
+        width: 480px;
+        margin: 0 10px;
+    }
+
+    .core .source .imageScan {
+        display: none;
+        position: absolute;
+        width: 480px;
+        height: 298px;
+        animation: scan 1.2s infinite;
+        background: linear-gradient(180deg, transparent, rgb(60, 166, 228));
+    }
+
+    .core .source #imgPreview {
+        width: 480px;
+        height: 298px;
+    }
+
+    .core .source .button-upload {
+        position: relative;
+    }
+
+    .core .source .button-upload .button-upload-show {
+        position: absolute;
+        width: 120px;
+        height: 45px;
+        background: cornflowerblue;
+    }
+
+    .core .source .button-upload .button-upload-show p {
+        line-height: 45px;
+        text-align: center;
+        color: white;
+    }
+
+    .core .source .button-upload #button-upload-hidden {
+        position: absolute;
+        opacity: 0;
+        width: 120px;
+        height: 45px;
+    }
+
+    .core .result {
+        float: left;
+        width: 480px;
+        margin: 0 10px;
+    }
+
+    .core .result #resultMsg {
+        width: 480px;
+        height: 298px;
+    }
+</style>
+
+<body>
+    <header>
+        <p>OCR 文字识别</p>
+    </header>
+    <div class="core">
+        <div class="source">
+            <div id="imageScan" class="imageScan"></div>
+            <img id="imgPreview" src="" alt="">
+            <div class="button-upload">
+                <div class="button-upload-show">
+                    <p>上传图片</p>
+                </div>
+                <input id="button-upload-hidden" type="file" accept="image/png,image/jpg,image/jpeg"
+                    onchange="uploadImg(this)">
+            </div>
+        </div>
+        <div class="result">
+            <textarea name="" id="resultMsg" cols="30" rows="10"></textarea>
+        </div>
+    </div>
+    <script>
+        let imageScan = document.getElementById("imageScan")
+
+        let imgPreview = document.getElementById("imgPreview")
+        let resultMsg = document.getElementById("resultMsg")
+
+
+        function uploadImg(file) {
+            if (file && file.files[0]) {
+                imageScan.style.display = "block"
+                let reader = new FileReader()
+                reader.onload = function (evt) {
+                    imgPreview.src = evt.target.result
+                    let imageData = evt.target.result.replace(/.*?base64,/, "")
+                    $.ajax({
+                        type: 'POST',
+                        url: 'https://zn.gg/api/common/v1/ocr',
+                        timeout: '60000',
+                        dataType: 'json',
+                        data: {
+                            image: imageData
+                        },
+                        success: function (data) {
+
+                            let arr = eval('(' + data.value[0] + ')')
+                            var msg = ""
+                            arr.forEach(element => {
+                                msg += element
+                            });
+                            resultMsg.innerText = msg
+                            imageScan.style.display = "none"
+                        },
+                        error: function (data) {
+                            imageScan.style.display = "none"
+                        }
+                    })
+
+                }
+                return reader.readAsDataURL(file.files[0])
+            }
+        }
+    </script>
+</body>
+
+</html>
